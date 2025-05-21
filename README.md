@@ -20,5 +20,5 @@ python setup.py install
 ## Using the Python Bindings
 
 ```python
-import pyroboticsservice  # Replace with the actual module name
+import pyroboticsservice
 ```
