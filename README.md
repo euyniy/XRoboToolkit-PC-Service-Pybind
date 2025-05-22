@@ -13,7 +13,6 @@ This project provides a python interface to extract XR state using Pico robot sd
 ## Building the Project
 
 ```
-python setup.py build
 python setup.py install
 ```
 

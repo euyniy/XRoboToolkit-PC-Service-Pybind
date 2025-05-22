@@ -3,8 +3,9 @@ import re
 import sys
 import platform
 import subprocess
+import shutil  # Added for shutil.rmtree
 
-from setuptools import setup, Extension, find_packages
+from setuptools import setup, Extension, find_packages, Command  # Added Command
 from setuptools.command.build_ext import build_ext
 from distutils.version import LooseVersion
 
@@ -81,6 +82,69 @@ class CMakeBuild(build_ext):
         )
 
 
+# New Clean Command
+class CleanCommand(Command):
+    """Custom clean command to tidy up the project root."""
+
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        # Remove build directory
+        if os.path.exists("build"):
+            print("Removing 'build/' directory")
+            shutil.rmtree("build")
+        # Remove .egg-info directory
+        for item in os.listdir("."):
+            if item.endswith(".egg-info"):
+                print(f"Removing '{item}' directory")
+                shutil.rmtree(item)
+        for item in os.listdir("."):
+            if item.endswith(".eggs"):
+                print(f"Removing '{item}' directory")
+                shutil.rmtree(item)
+        # Optionally, remove dist directory if you generate distributions
+        if os.path.exists("dist"):
+            print("Removing 'dist/' directory")
+            shutil.rmtree("dist")
+
+
+# New Uninstall Command
+class UninstallCommand(Command):
+    """Custom command to uninstall the package."""
+
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        package_name = self.distribution.get_name()
+        print(f"Attempting to uninstall {package_name}...")
+        try:
+            subprocess.check_call(
+                [sys.executable, "-m", "pip", "uninstall", "-y", package_name]
+            )
+            print(f"{package_name} uninstalled successfully.")
+        except subprocess.CalledProcessError as e:
+            print(
+                f"Failed to uninstall {package_name}. It may not be installed or pip uninstall failed."
+            )
+            print(f"Error: {e}")
+        except FileNotFoundError:
+            print(
+                "pip command not found. Please ensure pip is installed and in your PATH."
+            )
+
+
 setup(
     name="pyroboticsservice",
     version="0.0.1",
@@ -89,7 +153,11 @@ setup(
     description="A Python binding for PXREARobotSDK using pybind11 and CMake",
     long_description="",  # Optionally, load from a README.md file
     ext_modules=[CMakeExtension("pyroboticsservice")],
-    cmdclass=dict(build_ext=CMakeBuild),
+    cmdclass=dict(
+        build_ext=CMakeBuild,
+        clean=CleanCommand,  # Add clean command
+        uninstall=UninstallCommand,  # Add uninstall command
+    ),
     zip_safe=False,
     python_requires=">=3.6",  # Specify your Python version requirement
     packages=find_packages(),  # If you have other Python packages in your project

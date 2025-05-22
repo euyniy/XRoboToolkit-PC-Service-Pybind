@@ -163,6 +163,33 @@ double getRightGrip() {
     return RightGrip;
 }
 
+std::array<double, 7> getPoseByName(const std::string& poseName) {
+    if (poseName == "left_controller") {
+        return getLeftControllerPose();
+    } else if (poseName == "right_controller") {
+        return getRightControllerPose();
+    } else if (poseName == "headset") {
+        return getHeadsetPose();
+    } else {
+        throw std::invalid_argument("Invalid pose name");
+    }
+}
+
+double getKeyValueByName(const std::string& keyName) {
+    if (keyName == "left_trigger") {
+        return getLeftTrigger();
+    } else if (keyName == "left_grip") {
+        return getLeftGrip();
+    } else if (keyName == "right_trigger") {
+        return getRightTrigger();
+    } else if (keyName == "right_grip") {
+        return getRightGrip();
+    } else {
+        std::cout << "Invalid key name: " << keyName << std::endl;
+        throw std::invalid_argument("Invalid key name");
+    }
+}
+
 PYBIND11_MODULE(pyroboticsservice, m) {
     m.def("run_main_loop", &run_main_loop, "A function that runs the main loop of the application.");
     m.def("init", &init, "Initialize the PXREARobot SDK.");
@@ -174,4 +201,6 @@ PYBIND11_MODULE(pyroboticsservice, m) {
     m.def("get_left_grip", &getLeftGrip, "Get the left grip value.");
     m.def("get_right_trigger", &getRightTrigger, "Get the right trigger value.");
     m.def("get_right_grip", &getRightGrip, "Get the right grip value.");
+    m.def("get_pose_by_name", &getPoseByName, "Get the pose by name (left_controller, right_controller, headset).");
+    m.def("get_key_value_by_name", &getKeyValueByName, "Get the key value by name (left_trigger, left_grip, right_trigger, right_grip).");
 }
