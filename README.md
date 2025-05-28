@@ -35,10 +35,6 @@ print(f"Left Controller Pose: {left_pose}")
 print(f"Right Controller Pose: {right_pose}")
 print(f"Headset Pose: {headset_pose}")
 
-# Alternatively, get poses by name
-left_pose_by_name = pico.get_pose_by_name("left_controller")
-print(f"Left Controller Pose (by name): {left_pose_by_name}")
-
 pico.deinit()
 ```
 
@@ -54,19 +50,10 @@ left_trigger = pico.get_left_trigger()
 right_grip = pico.get_right_grip()
 print(f"Left Trigger: {left_trigger}, Right Grip: {right_grip}")
 
-# Get trigger/grip by name
-left_trigger_by_name = pico.get_key_value_by_name("left_trigger")
-print(f"Left Trigger (by name): {left_trigger_by_name}")
-
 # Buttons
 a_button_pressed = pico.get_A_button()
 x_button_pressed = pico.get_X_button()
 print(f"A Button Pressed: {a_button_pressed}, X Button Pressed: {x_button_pressed}")
-
-# Get button state by name
-left_menu_by_name = pico.get_button_state_by_name("left_menu_button")
-print(f"Left Menu Button (by name): {left_menu_by_name}")
-
 
 # Axes
 left_axis = pico.get_left_axis()

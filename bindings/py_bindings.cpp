@@ -221,56 +221,6 @@ int64_t getTimeStampNs() {
     return TimeStampNs;
 }
 
-std::array<double, 7> getPoseByName(const std::string& poseName) {
-    if (poseName == "left_controller") {
-        return getLeftControllerPose();
-    } else if (poseName == "right_controller") {
-        return getRightControllerPose();
-    } else if (poseName == "headset") {
-        return getHeadsetPose();
-    } else {
-        throw std::invalid_argument("Invalid pose name");
-    }
-}
-
-double getKeyValueByName(const std::string& keyName) {
-    if (keyName == "left_trigger") {
-        return getLeftTrigger();
-    } else if (keyName == "left_grip") {
-        return getLeftGrip();
-    } else if (keyName == "right_trigger") {
-        return getRightTrigger();
-    } else if (keyName == "right_grip") {
-        return getRightGrip();
-    } else {
-        std::cout << "Invalid key name: " << keyName << std::endl;
-        throw std::invalid_argument("Invalid key name");
-    }
-}
-
-bool getButtonStateByName(const std::string& buttonName) {
-    if (buttonName == "left_menu_button") {
-        return getLeftMenuButton();
-    } else if (buttonName == "right_menu_button") {
-        return getRightMenuButton();
-    } else if (buttonName == "left_axis_click") {
-        return getLeftAxisClick();
-    } else if (buttonName == "right_axis_click") {
-        return getRightAxisClick();
-    } else if (buttonName == "X") {
-        return getLeftPrimaryButton();
-    } else if (buttonName == "A") {
-        return getRightPrimaryButton();
-    } else if (buttonName == "Y") {
-        return getLeftSecondaryButton();
-    } else if (buttonName == "B") {
-        return getRightSecondaryButton();
-    } else {
-        std::cout << "Invalid button name: " << buttonName << std::endl;
-        throw std::invalid_argument("Invalid button name");
-    }
-}
-
 PYBIND11_MODULE(pyroboticsservice, m) {
     m.def("init", &init, "Initialize the PXREARobot SDK.");
     m.def("deinit", &deinit, "Deinitialize the PXREARobot SDK.");
@@ -292,8 +242,5 @@ PYBIND11_MODULE(pyroboticsservice, m) {
     m.def("get_Y_button", &getLeftSecondaryButton, "Get the left secondary button state.");
     m.def("get_B_button", &getRightSecondaryButton, "Get the right secondary button state.");
     m.def("get_time_stamp_ns", &getTimeStampNs, "Get the timestamp in nanoseconds.");
-    m.def("get_pose_by_name", &getPoseByName, "Get the pose by name (left_controller, right_controller, headset).");
-    m.def("get_key_value_by_name", &getKeyValueByName, "Get the key value by name (left_trigger, left_grip, right_trigger, right_grip).");
-    m.def("get_button_state_by_name", &getButtonStateByName, "Get the button state by name (left_menu_button, right_menu_button, left_axis_click, right_axis_click, X, A, Y, B).");
     m.doc() = "Python bindings for PXREARobot SDK using pybind11.";
 }
