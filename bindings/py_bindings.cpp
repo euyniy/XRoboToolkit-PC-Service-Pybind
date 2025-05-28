@@ -36,7 +36,7 @@ int64_t TimeStampNs;
 std::mutex leftMutex;
 std::mutex rightMutex;
 std::mutex headsetPoseMutex;
-std::mutex coutMutex;
+std::mutex timestampMutex;
 
 std::array<double, 7> stringToPoseArray(const std::string& poseStr) {
     std::array<double, 7> result{0};
@@ -102,7 +102,6 @@ void OnPXREAClientCallback(void* context, PXREAClientCallbackType type, int stat
                         RightAxisClick = right["axisClick"].get<bool>();
                         RightPrimaryButton = right["primaryButton"].get<bool>();
                         RightSecondaryButton = right["secondaryButton"].get<bool>();
-                        TimeStampNs = right["timeStampNs"].get<int64_t>();
                     }
                 }
                 if (value.contains("Head")) {
@@ -111,6 +110,10 @@ void OnPXREAClientCallback(void* context, PXREAClientCallbackType type, int stat
                         std::lock_guard<std::mutex> lock(headsetPoseMutex);
                         HeadsetPose = stringToPoseArray(headset["pose"].get<std::string>());
                     }
+                }
+                if (value.contains("timeStampNs")) {
+                    std::lock_guard<std::mutex> lock(timestampMutex);
+                    TimeStampNs = value["timeStampNs"].get<int64_t>();
                 }
             }
         } catch (const json::exception& e) {
@@ -217,7 +220,7 @@ bool getRightSecondaryButton() {
 }
 
 int64_t getTimeStampNs() {
-    std::lock_guard<std::mutex> lock(rightMutex);
+    std::lock_guard<std::mutex> lock(timestampMutex);
     return TimeStampNs;
 }
 
