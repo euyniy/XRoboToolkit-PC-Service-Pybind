@@ -14,13 +14,27 @@ using json = nlohmann::json;
 std::array<double, 7> LeftControllerPose;
 std::array<double, 7> RightControllerPose;
 std::array<double, 7> HeadsetPose;
+
+bool LeftMenuButton;
 double LeftTrigger;
 double LeftGrip;
+std::array<double, 2> LeftAxis{0.0, 0.0};
+bool LeftAxisClick;
+bool LeftPrimaryButton;
+bool LeftSecondaryButton;
+
+bool RightMenuButton;
 double RightTrigger;
 double RightGrip;
+std::array<double, 2> RightAxis{0.0, 0.0};
+bool RightAxisClick;
+bool RightPrimaryButton;
+bool RightSecondaryButton;
 
-std::mutex leftPoseMutex;
-std::mutex rightPoseMutex;
+int64_t TimeStampNs;
+
+std::mutex leftMutex;
+std::mutex rightMutex;
 std::mutex headsetPoseMutex;
 std::mutex coutMutex;
 
@@ -63,19 +77,32 @@ void OnPXREAClientCallback(void* context, PXREAClientCallbackType type, int stat
                 if (value["Controller"].contains("left")) {
                     auto& left = value["Controller"]["left"];
                     {
-                        std::lock_guard<std::mutex> lock(leftPoseMutex);
+                        std::lock_guard<std::mutex> lock(leftMutex);
                         LeftControllerPose = stringToPoseArray(left["pose"].get<std::string>());
                         LeftTrigger = left["trigger"].get<double>();
                         LeftGrip = left["grip"].get<double>();
+                        LeftMenuButton = left["menuButton"].get<bool>();
+                        LeftAxis[0] = left["axisX"].get<double>();
+                        LeftAxis[1] = left["axisY"].get<double>();
+                        LeftAxisClick = left["axisClick"].get<bool>();
+                        LeftPrimaryButton = left["primaryButton"].get<bool>();
+                        LeftSecondaryButton = left["secondaryButton"].get<bool>();
                     }
                 }
                 if (value["Controller"].contains("right")) {
                     auto& right = value["Controller"]["right"];
                     {
-                        std::lock_guard<std::mutex> lock(rightPoseMutex);
+                        std::lock_guard<std::mutex> lock(rightMutex);
                         RightControllerPose = stringToPoseArray(right["pose"].get<std::string>());
                         RightTrigger = right["trigger"].get<double>();
                         RightGrip = right["grip"].get<double>();
+                        RightMenuButton = right["menuButton"].get<bool>();
+                        RightAxis[0] = right["axisX"].get<double>();
+                        RightAxis[1] = right["axisY"].get<double>();
+                        RightAxisClick = right["axisClick"].get<bool>();
+                        RightPrimaryButton = right["primaryButton"].get<bool>();
+                        RightSecondaryButton = right["secondaryButton"].get<bool>();
+                        TimeStampNs = right["timeStampNs"].get<int64_t>();
                     }
                 }
                 if (value.contains("Head")) {
@@ -101,66 +128,97 @@ void init() {
 
 void deinit() {
     PXREADeinit();
-}   
-
-void run_main_loop() {
-    if (PXREAInit(NULL, OnPXREAClientCallback, PXREAFullMask) != 0) {
-        throw std::runtime_error("PXREAInit failed");
-    }
-
-    try {
-        pybind11::gil_scoped_release release_gil;
-
-        while (true) {
-            {
-                pybind11::gil_scoped_acquire acquire_gil;
-                if (PyErr_CheckSignals() != 0) {
-                    throw pybind11::error_already_set();
-                }
-            } // GIL is released here by acquire_gil's destructor
-
-            std::cout << " main loop alive." << std::endl;
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-        }
-    } catch (const pybind11::error_already_set &e) {
-        std::cout << "Interrupt received or Python error, deinitializing SDK..." << std::endl;
-        PXREADeinit(); // Ensure resources are cleaned up
-        throw; 
-    } catch (const std::exception &e) {
-        // Catch any other C++ exceptions
-        std::cerr << "C++ exception in main loop: " << e.what() << std::endl;
-        PXREADeinit(); // Ensure resources are cleaned up
-        throw;
-    }
 }
 
 std::array<double, 7> getLeftControllerPose() {
-    std::lock_guard<std::mutex> lock(leftPoseMutex);
+    std::lock_guard<std::mutex> lock(leftMutex);
     return LeftControllerPose;
 }
+
 std::array<double, 7> getRightControllerPose() {
-    std::lock_guard<std::mutex> lock(rightPoseMutex);
+    std::lock_guard<std::mutex> lock(rightMutex);
     return RightControllerPose;
 }
+
 std::array<double, 7> getHeadsetPose() {
     std::lock_guard<std::mutex> lock(headsetPoseMutex);
     return HeadsetPose;
 }
+
 double getLeftTrigger() {
-    std::lock_guard<std::mutex> lock(leftPoseMutex);
+    std::lock_guard<std::mutex> lock(leftMutex);
     return LeftTrigger;
 }
+
 double getLeftGrip() {
-    std::lock_guard<std::mutex> lock(leftPoseMutex);
+    std::lock_guard<std::mutex> lock(leftMutex);
     return LeftGrip;
 }
+
 double getRightTrigger() {
-    std::lock_guard<std::mutex> lock(rightPoseMutex);
+    std::lock_guard<std::mutex> lock(rightMutex);
     return RightTrigger;
 }
+
 double getRightGrip() {
-    std::lock_guard<std::mutex> lock(rightPoseMutex);
+    std::lock_guard<std::mutex> lock(rightMutex);
     return RightGrip;
+}
+
+bool getLeftMenuButton() {
+    std::lock_guard<std::mutex> lock(leftMutex);
+    return LeftMenuButton;
+}
+
+bool getRightMenuButton() {
+    std::lock_guard<std::mutex> lock(rightMutex);
+    return RightMenuButton;
+}
+
+bool getLeftAxisClick() {
+    std::lock_guard<std::mutex> lock(leftMutex);
+    return LeftAxisClick;
+}
+
+bool getRightAxisClick() {
+    std::lock_guard<std::mutex> lock(rightMutex);
+    return RightAxisClick;
+}
+
+std::array<double, 2> getLeftAxis() {
+    std::lock_guard<std::mutex> lock(leftMutex);
+    return LeftAxis;
+}
+
+
+std::array<double, 2> getRightAxis() {
+    std::lock_guard<std::mutex> lock(rightMutex);
+    return RightAxis;
+}
+
+bool getLeftPrimaryButton() {
+    std::lock_guard<std::mutex> lock(leftMutex);
+    return LeftPrimaryButton;
+}
+
+bool getRightPrimaryButton() {
+    std::lock_guard<std::mutex> lock(rightMutex);
+    return RightPrimaryButton;
+}
+
+bool getLeftSecondaryButton() {
+    std::lock_guard<std::mutex> lock(leftMutex);
+    return LeftSecondaryButton;
+}
+
+bool getRightSecondaryButton() {
+    std::lock_guard<std::mutex> lock(rightMutex);
+    return RightSecondaryButton;
+}
+
+int64_t getTimeStampNs() {
+    std::lock_guard<std::mutex> lock(rightMutex);
+    return TimeStampNs;
 }
 
 std::array<double, 7> getPoseByName(const std::string& poseName) {
@@ -190,8 +248,30 @@ double getKeyValueByName(const std::string& keyName) {
     }
 }
 
+bool getButtonStateByName(const std::string& buttonName) {
+    if (buttonName == "left_menu_button") {
+        return getLeftMenuButton();
+    } else if (buttonName == "right_menu_button") {
+        return getRightMenuButton();
+    } else if (buttonName == "left_axis_click") {
+        return getLeftAxisClick();
+    } else if (buttonName == "right_axis_click") {
+        return getRightAxisClick();
+    } else if (buttonName == "X") {
+        return getLeftPrimaryButton();
+    } else if (buttonName == "A") {
+        return getRightPrimaryButton();
+    } else if (buttonName == "Y") {
+        return getLeftSecondaryButton();
+    } else if (buttonName == "B") {
+        return getRightSecondaryButton();
+    } else {
+        std::cout << "Invalid button name: " << buttonName << std::endl;
+        throw std::invalid_argument("Invalid button name");
+    }
+}
+
 PYBIND11_MODULE(pyroboticsservice, m) {
-    m.def("run_main_loop", &run_main_loop, "A function that runs the main loop of the application.");
     m.def("init", &init, "Initialize the PXREARobot SDK.");
     m.def("deinit", &deinit, "Deinitialize the PXREARobot SDK.");
     m.def("get_left_controller_pose", &getLeftControllerPose, "Get the left controller pose.");
@@ -201,6 +281,19 @@ PYBIND11_MODULE(pyroboticsservice, m) {
     m.def("get_left_grip", &getLeftGrip, "Get the left grip value.");
     m.def("get_right_trigger", &getRightTrigger, "Get the right trigger value.");
     m.def("get_right_grip", &getRightGrip, "Get the right grip value.");
+    m.def("get_left_menu_button", &getLeftMenuButton, "Get the left menu button state.");
+    m.def("get_right_menu_button", &getRightMenuButton, "Get the right menu button state.");
+    m.def("get_left_axis_click", &getLeftAxisClick, "Get the left axis click state.");
+    m.def("get_right_axis_click", &getRightAxisClick, "Get the right axis click state.");
+    m.def("get_left_axis", &getLeftAxis, "Get the left axis values (x, y).");
+    m.def("get_right_axis", &getRightAxis, "Get the right axis values (x, y).");
+    m.def("get_X_button", &getLeftPrimaryButton, "Get the left primary button state.");
+    m.def("get_A_button", &getRightPrimaryButton, "Get the right primary button state.");
+    m.def("get_Y_button", &getLeftSecondaryButton, "Get the left secondary button state.");
+    m.def("get_B_button", &getRightSecondaryButton, "Get the right secondary button state.");
+    m.def("get_time_stamp_ns", &getTimeStampNs, "Get the timestamp in nanoseconds.");
     m.def("get_pose_by_name", &getPoseByName, "Get the pose by name (left_controller, right_controller, headset).");
     m.def("get_key_value_by_name", &getKeyValueByName, "Get the key value by name (left_trigger, left_grip, right_trigger, right_grip).");
+    m.def("get_button_state_by_name", &getButtonStateByName, "Get the button state by name (left_menu_button, right_menu_button, left_axis_click, right_axis_click, X, A, Y, B).");
+    m.doc() = "Python bindings for PXREARobot SDK using pybind11.";
 }
