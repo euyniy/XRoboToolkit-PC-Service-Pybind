@@ -224,9 +224,9 @@ int64_t getTimeStampNs() {
     return TimeStampNs;
 }
 
-PYBIND11_MODULE(pyroboticsservice, m) {
+PYBIND11_MODULE(xrobotoolkit_sdk, m) {
     m.def("init", &init, "Initialize the PXREARobot SDK.");
-    m.def("deinit", &deinit, "Deinitialize the PXREARobot SDK.");
+    m.def("close", &deinit, "Deinitialize the PXREARobot SDK.");
     m.def("get_left_controller_pose", &getLeftControllerPose, "Get the left controller pose.");
     m.def("get_right_controller_pose", &getRightControllerPose, "Get the right controller pose.");
     m.def("get_headset_pose", &getHeadsetPose, "Get the headset pose.");

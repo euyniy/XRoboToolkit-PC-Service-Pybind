@@ -1,3 +1,7 @@
+/**
+ * @file PXREARobotSDK.h
+ * @brief Robot SDK header file for client-side communication
+ */
 #ifndef PXREACLIENTSDK_H
 #define PXREACLIENTSDK_H
 #ifdef _WIN32
@@ -22,21 +26,21 @@ extern "C" {
 
 enum PXREAClientCallbackType
 {
-    /// @brief 服务已连接
+    /// @brief Server connected
     PXREAServerConnect          = 1<<2,
-    /// @brief 服务已断开
+    /// @brief Server disconnected
     PXREAServerDisconnect       = 1<<3,
-    /// @brief 设备上线
+    /// @brief Device online
     PXREADeviceFind             = 1<<4,
-    /// @brief 设备离线
+    /// @brief Device offline
     PXREADeviceMissing          = 1<<5,
-    /// @brief 设备连接
+    /// @brief Device connected
     PXREADeviceConnect          = 1<<9,
-    /// @brief 设备状态Json描述
+    /// @brief Device state in JSON format
     PXREADeviceStateJson        = 1<<25,
-    /// @brief 自定义消息
+    /// @brief Custom message
     PXREADeviceCustomMessage    = 1<<26,
-    /// @brief 掩码,用于开启全部回调
+    /// @brief Mask for enabling all callbacks
     PXREAFullMask               = 0xffffffff
 };
 
@@ -47,21 +51,21 @@ enum PXREAClientCallbackType
 
 
 
-/// @brief 设备状态json描述
+/// @brief Device state in JSON format
 typedef struct {
-    /// @brief 设备sn
+    /// @brief Device serial number
     char devID[32];
-    /// @brief json格式的设备状态
+    /// @brief JSON string containing device state information
     char stateJson[16352];
 }PXREADevStateJson;
 
 
 typedef struct {
-    /// @brief 设备sn
+    /// @brief Device serial number
     char devID[32];
-    /// @brief 数据长度
+    /// @brief Data size
     uint64_t dataSize;
-    /// @brief 数据指针，回调内有效
+    /// @brief Data pointer, valid within callback
     const char* dataPtr;
 }PXREADevCustomMessage;
 
@@ -69,44 +73,44 @@ typedef struct {
 
 
 /**
- * @brief 客户端回调，用户接收服务端消息
- * @param context 回调上下文，由 #Init 参数1 context 传入
- * @param type 回调类型
- * @param status 回调状态码
- * @param userData 回调数据指针，由参数2 type 决定
+ * @brief Client callback for receiving server messages
+ * @param context Callback context, passed from #Init parameter 1 context
+ * @param type Callback type
+ * @param status Callback status code
+ * @param userData Callback data pointer, determined by parameter 2 type
  */
 typedef void(*pfPXREAClientCallback)(void* context,PXREAClientCallbackType type,int status,void* userData);
 
 /**
- * @brief SDK初始化接口
- * @brief 连接服务，同时注册回调
- * @param context 回调上下文，用于为回调函数传入用户自定义数据
- * @param cliCallback 回调函数指针，用于监听服务端消息
- * @param mask 回调掩码，用于屏蔽某些服务端消息
+ * @brief SDK initialization interface
+ * @details Connect to service and register callback
+ * @param context Callback context for passing user-defined data to callback function
+ * @param cliCallback Callback function pointer for listening to server messages
+ * @param mask Callback mask for filtering certain server messages
  */
 PXREACLIENTSDK_EXPORT int PXREAInit(void* context,pfPXREAClientCallback cliCallback,unsigned mask);
 /**
- * @brief 终止接口
- * @brief 断开服务连接
+ * @brief Termination interface
+ * @details Disconnect from service
  */
 PXREACLIENTSDK_EXPORT int PXREADeinit();
 
 /**
- * @brief 向设备发送json格式指令
- * @param devID 设备sn
- * @param parameterJson 功能及参数,json格式,具体用法参考企业套件SDK文档
- * @return 0 成功
- * @return -1 失败
+ * @brief Send JSON format command to device
+ * @param devID Device serial number
+ * @param parameterJson Function and parameters in JSON format, refer to robot SDK documentation for specific usage
+ * @return 0 Success
+ * @return -1 Failure
  */
 PXREACLIENTSDK_EXPORT int PXREADeviceControlJson(const char *devID,const char *parameterJson);
 /**
- * @brief 向指定设备发送字节流
- * @param devID 设备sn
- * @param data 字节流起始地址
- * @param len 字节流长度
- * @return 0 成功
- * @return -1 失败
- * @note 此命令适用于sdk调用者自定义消息
+ * @brief Send byte stream to specified device
+ * @note This command is suitable for SDK caller's custom messages
+ * @param devID Device serial number
+ * @param data Starting address of byte stream
+ * @param len Length of byte stream
+ * @return 0 Success
+ * @return -1 Failure
  */
 PXREACLIENTSDK_EXPORT int PXREASendBytesToDevice(const char* devID,const char* data,unsigned len);
 #ifdef __cplusplus

@@ -1,6 +1,7 @@
-import pyroboticsservice as pico
-import time
 import sys
+import time
+
+import xrobotoolkit_sdk as pico
 
 
 def run_tests():
