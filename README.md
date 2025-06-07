@@ -9,16 +9,15 @@ This project provides a python interface to extract XR state using XRoboToolkit-
 
 ## Building the Project
 ### Ubuntu 22.04
+
 ```
 bash setup_ubuntu.sh
 ```
 
 ### Windows
-- Compile the `PXREARobotSDK` under [`XRoboRoolkit PC Service`](https://github.com/XR-Robotics/XRoboToolkit-PC-Service#)
-- copy `PXREARobotSDK.lib` and `PXREARobotSDK.dll` to `lib` folder.
-- install the package by
+
 ```
-python setup.py install
+setup_windows.bat
 ```
 
 ## Using the Python Bindings
