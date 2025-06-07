@@ -1,24 +1,27 @@
-# 
+# XRoboToolkit-PC-Service-Pybind
 
-This project provides a python interface to extract XR state using Pico robot sdk.
+This project provides a python interface to extract XR state using XRoboToolkit-PC-Service sdk.
 
 ## Requirements
 
-- CMake
-- python3
-- pybind11
-- nlohmann/json
-- XRoboRoolkit PC Service
+- [`pybind11`](https://github.com/pybind/pybind11)
+- [`XRoboRoolkit PC Service`](https://github.com/XR-Robotics/XRoboToolkit-PC-Service#)
 
 ## Building the Project
+### Ubuntu 22.04
+```
+bash setup_ubuntu.sh
+```
 
+### Windows
+- Compile the `PXREARobotSDK` under [`XRoboRoolkit PC Service`](https://github.com/XR-Robotics/XRoboToolkit-PC-Service#)
+- copy `PXREARobotSDK.lib` and `PXREARobotSDK.dll` to `lib` folder.
+- install the package by
 ```
 python setup.py install
 ```
 
 ## Using the Python Bindings
-
-## Examples
 
 **1. Get Controller and Headset Poses**
 
