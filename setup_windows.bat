@@ -1,0 +1,195 @@
+@echo off
+setlocal
+
+echo Setting up environment for XRoboToolkit-PC-Service...
+
+:: Define the base directory for the script execution
+set "SCRIPT_ROOT=%CD%"
+
+:: Define a temporary directory for cloning
+set "TEMP_DIR=tmp"
+
+:: Define source paths relative to the cloned repository root
+set "XROBOTKIT_CLONED_REPO_PATH=%TEMP_DIR%\XRoboToolkit-PC-Service"
+set "PXREAROBOTSDK_SOURCE_DIR=%XROBOTKIT_CLONED_REPO_PATH%\RoboticsService\PXREARobotSDK"
+set "PXREAROBOTSDK_LIB_DIR=%XROBOTKIT_CLONED_REPO_PATH%\RoboticsService\SDK\win\64"
+
+:: Define destination directories
+set "LIB_DEST_DIR=%SCRIPT_ROOT%\lib"
+set "INCLUDE_DEST_DIR=%SCRIPT_ROOT%\include"
+
+set "DLL_NAME=PXREARobotSDK.dll"
+set "LIB_NAME=PXREARobotSDK.lib"
+
+:: Create the temporary directory and navigate into it
+echo Creating temporary directory: %TEMP_DIR%
+mkdir %TEMP_DIR%
+if not exist %TEMP_DIR% (
+    echo Error: Failed to create temporary directory %TEMP_DIR%. Ingore.
+)
+cd %TEMP_DIR%
+if %errorlevel% neq 0 (
+    echo Error: Failed to navigate into %TEMP_DIR%. Exiting.
+    exit /b 1
+)
+
+:: Clone the repository
+echo Cloning XRoboToolkit-PC-Service repository...
+git clone https://github.com/XR-Robotics/XRoboToolkit-PC-Service.git
+if %errorlevel% neq 0 (
+    echo Error: Git clone failed. Exiting.
+    cd ..
+    rmdir /s /q %TEMP_DIR%
+    exit /b 1
+)
+
+:: Navigate back to the script's root directory to handle destinations
+cd %SCRIPT_ROOT%
+if %errorlevel% neq 0 (
+    echo Error: Failed to navigate back to script root. Exiting.
+    exit /b 1
+)
+
+:: --- Copy Header Files ---
+echo.
+echo Copying header files to %INCLUDE_DEST_DIR%...
+
+:: Copy PXREARobotSDK.h
+set "PXREAROBOTSDK_H_SRC=%PXREAROBOTSDK_SOURCE_DIR%\PXREARobotSDK.h"
+echo Copying %PXREAROBOTSDK_H_SRC%
+copy "%PXREAROBOTSDK_H_SRC%" "%INCLUDE_DEST_DIR%\"
+if %errorlevel% neq 0 (
+    echo Error: Failed to copy PXREARobotSDK.h. Exiting.
+    goto :cleanup_and_exit
+)
+
+:: Create nlohmann subdirectory in include
+set "NLOHMANN_INCLUDE_DEST_DIR=%INCLUDE_DEST_DIR%\nlohmann"
+echo Ensuring '%NLOHMANN_INCLUDE_DEST_DIR%' directory exists...
+mkdir %NLOHMANN_INCLUDE_DEST_DIR% 2>NUL
+if %errorlevel% neq 0 (
+    echo Error: Failed to create nlohmann include directory. Ignore.
+)
+
+:: Copy nlohmann/json.hpp
+set "NLOHMANN_JSON_HPP_SRC=%PXREAROBOTSDK_SOURCE_DIR%\nlohmann\json.hpp"
+echo Copying %NLOHMANN_JSON_HPP_SRC%
+copy "%NLOHMANN_JSON_HPP_SRC%" "%NLOHMANN_INCLUDE_DEST_DIR%\"
+if %errorlevel% neq 0 (
+    echo Error: Failed to copy nlohmann/json.hpp. Exiting.
+    goto :cleanup_and_exit
+)
+
+:: Copy nlohmann/json_fwd.hpp
+set "NLOHMANN_JSON_FWD_HPP_SRC=%PXREAROBOTSDK_SOURCE_DIR%\nlohmann\json_fwd.hpp"
+echo Copying %NLOHMANN_JSON_FWD_HPP_SRC%
+copy "%NLOHMANN_JSON_FWD_HPP_SRC%" "%NLOHMANN_INCLUDE_DEST_DIR%\"
+if %errorlevel% neq 0 (
+    echo Error: Failed to copy nlohmann/json_fwd.hpp. Exiting.
+    goto :cleanup_and_exit
+)
+
+echo Header files copied successfully.
+
+:: --- Copy Pre-built PXREARobotSDK DLL and LIB ---
+echo.
+echo Checking for pre-built libraries in %PXREAROBOTSDK_LIB_DIR%
+set "DLL_SOURCE_PATH=%PXREAROBOTSDK_LIB_DIR%\%DLL_NAME%"
+set "LIB_SOURCE_PATH=%PXREAROBOTSDK_LIB_DIR%\%LIB_NAME%"
+
+if not exist "%DLL_SOURCE_PATH%" (
+    echo Error: Required DLL "%DLL_SOURCE_PATH%" not found.
+    echo Please ensure the cloned repository contains the pre-built files.
+    goto :cleanup_and_exit
+)
+if not exist "%LIB_SOURCE_PATH%" (
+    echo Error: Required LIB "%LIB_SOURCE_PATH%" not found.
+    echo Please ensure the cloned repository contains the pre-built files.
+    goto :cleanup_and_exit
+)
+
+echo Copying %DLL_NAME% to %LIB_DEST_DIR%/
+copy "%DLL_SOURCE_PATH%" "%LIB_DEST_DIR%\"
+if %errorlevel% neq 0 (
+    echo Error: Failed to copy %DLL_NAME%. Exiting.
+    goto :cleanup_and_exit
+)
+
+echo Copying %LIB_NAME% to %LIB_DEST_DIR%/
+copy "%LIB_SOURCE_PATH%" "%LIB_DEST_DIR%\"
+if %errorlevel% neq 0 (
+    echo Error: Failed to copy %LIB_NAME%. Exiting.
+    goto :cleanup_and_exit
+)
+
+echo Libraries copied successfully.
+
+:: --- Check for pybind11 and install if not found ---
+echo.
+echo Checking for pybind11...
+pip show pybind11 >NUL 2>&1
+if %errorlevel% neq 0 (
+    echo pybind11 not found. Attempting to install pybind11...
+    pip install pybind11
+    if %errorlevel% neq 0 (
+        echo Error: Failed to install pybind11. Exiting.
+        goto :cleanup_and_exit
+    )
+    echo pybind11 installed successfully.
+) else (
+    echo pybind11 is already installed.
+)
+
+:: --- Set PYBIND11_DIR for CMake ---
+:: This helps CMake find pybind11's configuration files during setup.py build.
+echo.
+echo Setting PYBIND11_DIR environment variable...
+for /f "usebackq" %%i in (`python -c "import sys; print(sys.prefix)"`) do set PYTHON_PREFIX=%%i
+if not defined PYTHON_PREFIX (
+    echo Error: Could not determine Python installation prefix.
+    echo Please ensure Python is correctly installed and in your PATH. Exiting.
+    goto :cleanup_and_exit
+)
+
+set "PYBIND11_DIR=%PYTHON_PREFIX%\Lib\site-packages\pybind11\share\cmake\pybind11"
+echo Attempting to set PYBIND11_DIR to: %PYBIND11_DIR%
+set PYBIND11_DIR=%PYBIND11_DIR%
+if not exist "%PYBIND11_DIR%\pybind11Config.cmake" (
+    echo Warning: pybind11Config.cmake not found at expected PYBIND11_DIR: "%PYBIND11_DIR%"
+    echo This might indicate a problem with the pybind11 installation or its path.
+    :: Attempting to find another common path if the standard one doesn't work.
+    for /d %%d in ("%PYTHON_PREFIX%\Lib\site-packages\pybind11\share\cmake\*") do (
+        if exist "%%d\pybind11Config.cmake" (
+            set "PYBIND11_DIR=%%d"
+            echo Found pybind11Config.cmake in "%%d". Using this path.
+            goto :pybind11_dir_found
+        )
+    )
+    echo Critical Error: pybind11Config.cmake could not be found after pybind11 installation.
+    echo Please check your pybind11 installation. Exiting.
+    goto :cleanup_and_exit
+)
+:pybind11_dir_found
+echo PYBIND11_DIR set to: %PYBIND11_DIR%
+
+:: Build and install the Python project
+echo.
+echo Building and installing the Python project...
+python setup.py install
+if %errorlevel% neq 0 (
+    echo Error: Python setup.py install failed. Exiting.
+    goto :cleanup_and_exit
+)
+
+:cleanup_and_exit
+:: Remove the temporary directory
+echo Cleaning up temporary directory: %TEMP_DIR%
+rmdir /s /q "%SCRIPT_ROOT%\%TEMP_DIR%"
+if %errorlevel% neq 0 (
+    echo Warning: Failed to remove temporary directory "%SCRIPT_ROOT%\%TEMP_DIR%". Please remove it manually.
+)
+
+echo.
+echo Setup completed successfully!
+
+endlocal

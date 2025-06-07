@@ -20,7 +20,7 @@ target_link_libraries(xrobotoolkit_sdk PRIVATE pybind11::module)
 # Add include directories and link libraries for PXREARobotSDK to xrobotoolkit_sdk target
 if(WIN32)
   target_include_directories(xrobotoolkit_sdk PUBLIC
-      ${PROJECT_SOURCE_DIR}/lib
+      ${PROJECT_SOURCE_DIR}/include
   )
   target_link_directories(xrobotoolkit_sdk PUBLIC ${PROJECT_SOURCE_DIR}/lib)
   target_link_libraries(xrobotoolkit_sdk PUBLIC
