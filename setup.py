@@ -44,7 +44,7 @@ class CMakeBuild(build_ext):
         cmake_args = [
             "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=" + extdir,
             "-DPYTHON_EXECUTABLE=" + sys.executable,
-            # Add other CMake arguments if needed
+            "-DCMAKE_BUILD_TYPE=Release",
         ]
 
         cfg = "Debug" if self.debug else "Release"

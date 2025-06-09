@@ -200,3 +200,6 @@ Thumbs.db
 .eggs/
 *.egg-info/
 .vscode/
+
+include/
+lib/

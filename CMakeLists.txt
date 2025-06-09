@@ -32,12 +32,12 @@ if(UNIX)
   # ISA_NAME is set by cmake_host_system_information above
   if(ISA_NAME STREQUAL "aarch64")
     target_include_directories(xrobotoolkit_sdk PUBLIC
-        ${PROJECT_SOURCE_DIR}/lib/aarch64
+        ${PROJECT_SOURCE_DIR}/include/aarch64
     )
     target_link_directories(xrobotoolkit_sdk PUBLIC ${PROJECT_SOURCE_DIR}/lib/aarch64)
   else()
     target_include_directories(xrobotoolkit_sdk PUBLIC
-        ${PROJECT_SOURCE_DIR}/lib
+        ${PROJECT_SOURCE_DIR}/include
     )
     target_link_directories(xrobotoolkit_sdk PUBLIC ${PROJECT_SOURCE_DIR}/lib)
   endif()

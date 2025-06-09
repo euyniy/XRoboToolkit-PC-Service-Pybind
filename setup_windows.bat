@@ -17,6 +17,21 @@ set "PXREAROBOTSDK_LIB_DIR=%XROBOTKIT_CLONED_REPO_PATH%\RoboticsService\SDK\win\
 :: Define destination directories
 set "LIB_DEST_DIR=%SCRIPT_ROOT%\lib"
 set "INCLUDE_DEST_DIR=%SCRIPT_ROOT%\include"
+:: Create destination directories
+echo Creating destination directories...
+mkdir "%LIB_DEST_DIR%" 2>NUL
+if not exist "%LIB_DEST_DIR%" (
+    echo Error: Failed to create lib directory. Exiting.
+    exit /b 1
+)
+
+mkdir "%INCLUDE_DEST_DIR%" 2>NUL
+if not exist "%INCLUDE_DEST_DIR%" (
+    echo Error: Failed to create include directory. Exiting.
+    exit /b 1
+)
+
+echo Destination directories created successfully.
 
 set "DLL_NAME=PXREARobotSDK.dll"
 set "LIB_NAME=PXREARobotSDK.lib"
