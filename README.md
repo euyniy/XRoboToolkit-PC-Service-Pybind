@@ -16,6 +16,8 @@ bash setup_ubuntu.sh
 
 ### Windows
 
+**Ensure pybind11 is installed before running the following command.**
+
 ```
 setup_windows.bat
 ```

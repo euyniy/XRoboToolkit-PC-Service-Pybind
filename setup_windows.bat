@@ -144,15 +144,8 @@ echo.
 echo Checking for pybind11...
 pip show pybind11 >NUL 2>&1
 if %errorlevel% neq 0 (
-    echo pybind11 not found. Attempting to install pybind11...
-    pip install pybind11
-    if %errorlevel% neq 0 (
-        echo Error: Failed to install pybind11. Exiting.
-        goto :cleanup_and_exit
-    )
-    echo pybind11 installed successfully.
-) else (
-    echo pybind11 is already installed.
+    echo Error: pybind11 not found. Please install pybind11 first. Exiting.
+    goto :cleanup_and_exit
 )
 
 :: --- Set PYBIND11_DIR for CMake ---
