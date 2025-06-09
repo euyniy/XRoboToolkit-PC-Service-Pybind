@@ -191,6 +191,8 @@ echo PYBIND11_DIR set to: %PYBIND11_DIR%
 echo.
 echo Building and installing the Python project...
 python setup.py install
+echo.
+echo Setup completed successfully!
 if %errorlevel% neq 0 (
     echo Error: Python setup.py install failed. Exiting.
     goto :cleanup_and_exit
@@ -203,8 +205,5 @@ rmdir /s /q "%SCRIPT_ROOT%\%TEMP_DIR%"
 if %errorlevel% neq 0 (
     echo Warning: Failed to remove temporary directory "%SCRIPT_ROOT%\%TEMP_DIR%". Please remove it manually.
 )
-
-echo.
-echo Setup completed successfully!
 
 endlocal
