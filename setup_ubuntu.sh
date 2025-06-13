@@ -15,4 +15,5 @@ cp tmp/XRoboToolkit-PC-Service/RoboticsService/PXREARobotSDK/build/libPXREARobot
 rm -rf tmp
 
 # Build the project
+pip install pybind11
 python setup.py install
