@@ -1,5 +1,5 @@
-export CC=/usr/bin/gcc
-export CXX=/usr/bin/g++
+# export CC=/usr/bin/gcc
+# export CXX=/usr/bin/g++
 mkdir -p tmp
 cd tmp
 git clone https://github.com/XR-Robotics/XRoboToolkit-PC-Service.git
