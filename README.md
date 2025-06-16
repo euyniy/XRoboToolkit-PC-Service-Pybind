@@ -70,3 +70,19 @@ print(f"Current Timestamp (ns): {timestamp}")
 
 xrt.close()
 ```
+
+**3. Get hand tracking state**
+```python
+import xrobotoolkit_sdk as xrt
+
+xrt.init()
+
+# Left Hand State
+left_hand_tracking_state = xrt.get_left_hand_tracking_state()
+print(f"Left Hand State: {left_hand_state}")
+# Right Hand State
+right_hand_tracking_state = xrt.get_right_hand_tracking_state()
+print(f"Right Hand State: {right_hand_tracking_state}")
+
+xrt.close()
+```

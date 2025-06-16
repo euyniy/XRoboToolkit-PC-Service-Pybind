@@ -66,6 +66,13 @@ def run_tests():
             print(f"Y Button (Left Secondary): {y_button}")
             print(f"B Button (Right Secondary): {b_button}")
 
+            # Left Hand State
+            left_hand_state = xrt.get_left_hand_tracking_state()
+            print(f"Left Hand State: {left_hand_state}")
+            # Right Hand State
+            right_hand_state = xrt.get_right_hand_tracking_state()
+            print(f"Right Hand State: {right_hand_state}")
+
             # Timestamp
             timestamp = xrt.get_time_stamp_ns()
             print(f"Timestamp (ns): {timestamp}")
@@ -79,9 +86,9 @@ def run_tests():
     except Exception as e:
         print(f"An unexpected error occurred: {e}", file=sys.stderr)
     finally:
-        print("\nDeinitializing SDK...")
+        print("\nClosing SDK...")
         xrt.close()
-        print("SDK Deinitialized.")
+        print("SDK closed.")
         print("Test finished.")
 
 

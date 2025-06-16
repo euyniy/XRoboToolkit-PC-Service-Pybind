@@ -15,6 +15,11 @@ std::array<double, 7> LeftControllerPose;
 std::array<double, 7> RightControllerPose;
 std::array<double, 7> HeadsetPose;
 
+std::array<std::array<double, 7>, 26> LeftHandTrackingState;
+double LeftHandScale = 1.0;
+std::array<std::array<double, 7>, 26> RightHandTrackingState;
+double RightHandScale = 1.0;
+
 bool LeftMenuButton;
 double LeftTrigger;
 double LeftGrip;
@@ -37,6 +42,8 @@ std::mutex leftMutex;
 std::mutex rightMutex;
 std::mutex headsetPoseMutex;
 std::mutex timestampMutex;
+std::mutex leftHandMutex;
+std::mutex rightHandMutex;
 
 std::array<double, 7> stringToPoseArray(const std::string& poseStr) {
     std::array<double, 7> result{0};
@@ -60,13 +67,13 @@ void OnPXREAClientCallback(void* context, PXREAClientCallbackType type, int stat
         std::cout << "server disconnect\n" << std::endl;
         break;
     case PXREADeviceFind:
-        std::cout << "device find " << (const char*)userData << std::endl;
+        std::cout << "device found\n" << (const char*)userData << std::endl;
         break;
     case PXREADeviceMissing:
-        std::cout << "device missing " << (const char*)userData << std::endl;
+        std::cout << "device missing\n" << (const char*)userData << std::endl;
         break;
     case PXREADeviceConnect:
-        std::cout << "device connect " << (const char*)userData << status << std::endl;
+        std::cout << "device connect\n" << (const char*)userData << status << std::endl;
         break;
     case PXREADeviceStateJson:
         auto& dsj = *((PXREADevStateJson*)userData);
@@ -114,6 +121,27 @@ void OnPXREAClientCallback(void* context, PXREAClientCallbackType type, int stat
                 if (value.contains("timeStampNs")) {
                     std::lock_guard<std::mutex> lock(timestampMutex);
                     TimeStampNs = value["timeStampNs"].get<int64_t>();
+                }
+                if (value["Hand"].contains("leftHand")) {
+                    auto& leftHand = value["Hand"]["leftHand"];
+                    {
+                        std::lock_guard<std::mutex> lock(leftHandMutex);
+                        
+                        LeftHandScale = leftHand["scale"].get<double>();
+                        for (int i = 0; i < 26; i++) {
+                            LeftHandTrackingState[i] = stringToPoseArray(leftHand["HandJointLocations"][i]["p"].get<std::string>());
+                        }
+                    }
+                }
+                if (value["Hand"].contains("rightHand")) {
+                    auto& rightHand = value["Hand"]["rightHand"];
+                    {
+                        std::lock_guard<std::mutex> lock(rightHandMutex);
+                        RightHandScale = rightHand["scale"].get<double>();
+                        for (int i = 0; i < 26; i++) {
+                            RightHandTrackingState[i] = stringToPoseArray(rightHand["HandJointLocations"][i]["p"].get<std::string>());
+                        }
+                    }
                 }
             }
         } catch (const json::exception& e) {
@@ -224,6 +252,26 @@ int64_t getTimeStampNs() {
     return TimeStampNs;
 }
 
+std::array<std::array<double, 7>, 26> getLeftHandTrackingState() {
+    std::lock_guard<std::mutex> lock(leftHandMutex);
+    return LeftHandTrackingState;
+}
+
+int getLeftHandScale() {
+    std::lock_guard<std::mutex> lock(leftHandMutex);
+    return LeftHandScale;
+}
+
+std::array<std::array<double, 7>, 26> getRightHandTrackingState() {
+    std::lock_guard<std::mutex> lock(rightHandMutex);
+    return RightHandTrackingState;
+}
+
+int getRightHandScale() {
+    std::lock_guard<std::mutex> lock(rightHandMutex);
+    return RightHandScale;
+}
+
 PYBIND11_MODULE(xrobotoolkit_sdk, m) {
     m.def("init", &init, "Initialize the PXREARobot SDK.");
     m.def("close", &deinit, "Deinitialize the PXREARobot SDK.");
@@ -245,5 +293,7 @@ PYBIND11_MODULE(xrobotoolkit_sdk, m) {
     m.def("get_Y_button", &getLeftSecondaryButton, "Get the left secondary button state.");
     m.def("get_B_button", &getRightSecondaryButton, "Get the right secondary button state.");
     m.def("get_time_stamp_ns", &getTimeStampNs, "Get the timestamp in nanoseconds.");
+    m.def("get_left_hand_tracking_state", &getLeftHandTrackingState, "Get the left hand state.");
+    m.def("get_right_hand_tracking_state", &getRightHandTrackingState, "Get the right hand state.");
     m.doc() = "Python bindings for PXREARobot SDK using pybind11.";
 }
