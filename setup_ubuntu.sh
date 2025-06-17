@@ -1,5 +1,3 @@
-# export CC=/usr/bin/gcc
-# export CXX=/usr/bin/g++
 mkdir -p tmp
 cd tmp
 git clone https://github.com/XR-Robotics/XRoboToolkit-PC-Service.git
@@ -16,4 +14,6 @@ rm -rf tmp
 
 # Build the project
 pip install pybind11
+
+pip uninstall -y xrobotoolkit_sdk
 python setup.py install
