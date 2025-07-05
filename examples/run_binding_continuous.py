@@ -13,7 +13,7 @@ def run_tests():
         print("SDK Initialized successfully.")
 
         print("\n--- Testing all functions for 10 iterations ---")
-        for i in range(10):
+        for i in range(100):
             print(f"\n--- Iteration {i+1} ---")
 
             # Poses
@@ -77,7 +77,7 @@ def run_tests():
             timestamp = xrt.get_time_stamp_ns()
             print(f"Timestamp (ns): {timestamp}")
 
-            time.sleep(1)  # Wait for 1 second before the next iteration
+            time.sleep(0.5)  # Wait for 0.5 seconds before the next iteration
 
         print("\nAll iterations complete.")
 
