@@ -203,3 +203,5 @@ Thumbs.db
 
 include/
 lib/
+
+tmp/
