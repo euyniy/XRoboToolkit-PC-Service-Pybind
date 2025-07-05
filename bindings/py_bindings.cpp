@@ -20,6 +20,14 @@ double LeftHandScale = 1.0;
 std::array<std::array<double, 7>, 26> RightHandTrackingState;
 double RightHandScale = 1.0;
 
+// Whole body motion data - 24 joints for body tracking
+std::array<std::array<double, 7>, 24> BodyJointsPose;  // Position and rotation for each joint
+std::array<std::array<double, 6>, 24> BodyJointsVelocity;  // Velocity and angular velocity for each joint
+std::array<std::array<double, 6>, 24> BodyJointsAcceleration;  // Acceleration and angular acceleration for each joint
+std::array<int64_t, 24> BodyJointsTimestamp;  // IMU timestamp for each joint
+int64_t BodyTimeStampNs = 0;  // Body data timestamp
+bool BodyDataAvailable = false;  // Flag to indicate if body data is available
+
 bool LeftMenuButton;
 double LeftTrigger;
 double LeftGrip;
@@ -44,6 +52,7 @@ std::mutex headsetPoseMutex;
 std::mutex timestampMutex;
 std::mutex leftHandMutex;
 std::mutex rightHandMutex;
+std::mutex bodyMutex;  // Mutex for body tracking data
 
 std::array<double, 7> stringToPoseArray(const std::string& poseStr) {
     std::array<double, 7> result{0};
@@ -51,6 +60,17 @@ std::array<double, 7> stringToPoseArray(const std::string& poseStr) {
     std::string value;
     int i = 0;
     while (std::getline(ss, value, ',') && i < 7) {
+        result[i++] = std::stod(value);
+    }
+    return result;
+}
+
+std::array<double, 6> stringToVelocityArray(const std::string& velocityStr) {
+    std::array<double, 6> result{0};
+    std::stringstream ss(velocityStr);
+    std::string value;
+    int i = 0;
+    while (std::getline(ss, value, ',') && i < 6) {
         result[i++] = std::stod(value);
     }
     return result;
@@ -140,6 +160,48 @@ void OnPXREAClientCallback(void* context, PXREAClientCallbackType type, int stat
                         RightHandScale = rightHand["scale"].get<double>();
                         for (int i = 0; i < 26; i++) {
                             RightHandTrackingState[i] = stringToPoseArray(rightHand["HandJointLocations"][i]["p"].get<std::string>());
+                        }
+                    }
+                }
+                // Parse Body data for whole body motion capture
+                if (value.contains("Body")) {
+                    auto& body = value["Body"];
+                    {
+                        std::lock_guard<std::mutex> lock(bodyMutex);
+                        
+                        if (body.contains("timeStampNs")) {
+                            BodyTimeStampNs = body["timeStampNs"].get<int64_t>();
+                        }
+                        
+                        if (body.contains("joints") && body["joints"].is_array()) {
+                            auto joints = body["joints"];
+                            int jointCount = std::min(static_cast<int>(joints.size()), 24);
+                            
+                            for (int i = 0; i < jointCount; i++) {
+                                auto& joint = joints[i];
+                                
+                                // Parse pose (position and rotation)
+                                if (joint.contains("p")) {
+                                    BodyJointsPose[i] = stringToPoseArray(joint["p"].get<std::string>());
+                                }
+                                
+                                // Parse velocity and angular velocity
+                                if (joint.contains("va")) {
+                                    BodyJointsVelocity[i] = stringToVelocityArray(joint["va"].get<std::string>());
+                                }
+                                
+                                // Parse acceleration and angular acceleration
+                                if (joint.contains("wva")) {
+                                    BodyJointsAcceleration[i] = stringToVelocityArray(joint["wva"].get<std::string>());
+                                }
+                                
+                                // Parse IMU timestamp
+                                if (joint.contains("t")) {
+                                    BodyJointsTimestamp[i] = joint["t"].get<int64_t>();
+                                }
+                            }
+                            
+                            BodyDataAvailable = true;
                         }
                     }
                 }
@@ -272,6 +334,37 @@ int getRightHandScale() {
     return RightHandScale;
 }
 
+// Body tracking functions
+bool isBodyDataAvailable() {
+    std::lock_guard<std::mutex> lock(bodyMutex);
+    return BodyDataAvailable;
+}
+
+std::array<std::array<double, 7>, 24> getBodyJointsPose() {
+    std::lock_guard<std::mutex> lock(bodyMutex);
+    return BodyJointsPose;
+}
+
+std::array<std::array<double, 6>, 24> getBodyJointsVelocity() {
+    std::lock_guard<std::mutex> lock(bodyMutex);
+    return BodyJointsVelocity;
+}
+
+std::array<std::array<double, 6>, 24> getBodyJointsAcceleration() {
+    std::lock_guard<std::mutex> lock(bodyMutex);
+    return BodyJointsAcceleration;
+}
+
+std::array<int64_t, 24> getBodyJointsTimestamp() {
+    std::lock_guard<std::mutex> lock(bodyMutex);
+    return BodyJointsTimestamp;
+}
+
+int64_t getBodyTimeStampNs() {
+    std::lock_guard<std::mutex> lock(bodyMutex);
+    return BodyTimeStampNs;
+}
+
 PYBIND11_MODULE(xrobotoolkit_sdk, m) {
     m.def("init", &init, "Initialize the PXREARobot SDK.");
     m.def("close", &deinit, "Deinitialize the PXREARobot SDK.");
@@ -295,5 +388,14 @@ PYBIND11_MODULE(xrobotoolkit_sdk, m) {
     m.def("get_time_stamp_ns", &getTimeStampNs, "Get the timestamp in nanoseconds.");
     m.def("get_left_hand_tracking_state", &getLeftHandTrackingState, "Get the left hand state.");
     m.def("get_right_hand_tracking_state", &getRightHandTrackingState, "Get the right hand state.");
+    
+    // Body tracking functions
+    m.def("is_body_data_available", &isBodyDataAvailable, "Check if body tracking data is available.");
+    m.def("get_body_joints_pose", &getBodyJointsPose, "Get the body joints pose data (24 joints, 7 values each: x,y,z,qx,qy,qz,qw).");
+    m.def("get_body_joints_velocity", &getBodyJointsVelocity, "Get the body joints velocity data (24 joints, 6 values each: vx,vy,vz,wx,wy,wz).");
+    m.def("get_body_joints_acceleration", &getBodyJointsAcceleration, "Get the body joints acceleration data (24 joints, 6 values each: ax,ay,az,wax,way,waz).");
+    m.def("get_body_joints_timestamp", &getBodyJointsTimestamp, "Get the body joints IMU timestamp data (24 joints).");
+    m.def("get_body_timestamp_ns", &getBodyTimeStampNs, "Get the body data timestamp in nanoseconds.");
+    
     m.doc() = "Python bindings for PXREARobot SDK using pybind11.";
 }

@@ -203,3 +203,7 @@ Thumbs.db
 
 include/
 lib/
+
+tmp/
+
+*.pkl
