@@ -13,7 +13,11 @@ cp tmp/XRoboToolkit-PC-Service/RoboticsService/PXREARobotSDK/build/libPXREARobot
 # rm -rf tmp
 
 # Build the project
-pip install pybind11
+if [[ "$CONDA_DEFAULT_ENV" != "" ]]; then
+    conda install -c conda-forge pybind11 -y
+else
+    pip install pybind11 -y
+fi
 
 pip uninstall -y xrobotoolkit_sdk
 python setup.py install
