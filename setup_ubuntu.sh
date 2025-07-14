@@ -1,3 +1,7 @@
+if [[ "$CONDA_DEFAULT_ENV" != "" ]]; then
+    conda install -c conda-forge libstdcxx-ng -y
+fi
+
 mkdir -p tmp
 cd tmp
 git clone https://github.com/XR-Robotics/XRoboToolkit-PC-Service.git
