@@ -131,7 +131,7 @@ class UninstallCommand(Command):
 
 setup(
     name="xrobotoolkit_sdk",
-    version="1.0.1",
+    version="1.0.2",
     author="Zhigen Zhao",
     author_email="zhigen.zhao@bytedance.com",
     description="A Python binding for XRobotoolkit PC Service SDK using pybind11 and CMake",
