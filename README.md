@@ -102,9 +102,18 @@ xrt.init()
 # Left Hand State
 left_hand_tracking_state = xrt.get_left_hand_tracking_state()
 print(f"Left Hand State: {left_hand_tracking_state}")
+
+# Left Hand isActive
+left_hand_is_active = xrt.get_left_hand_is_active()
+print(f"Left Hand isActive: {left_hand_is_active}")
+
 # Right Hand State
 right_hand_tracking_state = xrt.get_right_hand_tracking_state()
 print(f"Right Hand State: {right_hand_tracking_state}")
+
+# Right Hand isActive
+right_hand_is_active = xrt.get_right_hand_is_active()
+print(f"Right Hand isActive: {right_hand_is_active}")
 
 xrt.close()
 ```

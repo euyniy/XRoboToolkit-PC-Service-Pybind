@@ -17,8 +17,10 @@ std::array<double, 7> HeadsetPose;
 
 std::array<std::array<double, 7>, 26> LeftHandTrackingState;
 double LeftHandScale = 1.0;
+int LeftHandIsActive = 0;
 std::array<std::array<double, 7>, 26> RightHandTrackingState;
 double RightHandScale = 1.0;
+int RightHandIsActive = 0;
 
 // Whole body motion data - 24 joints for body tracking
 std::array<std::array<double, 7>, 24> BodyJointsPose;  // Position and rotation for each joint
@@ -148,6 +150,7 @@ void OnPXREAClientCallback(void* context, PXREAClientCallbackType type, int stat
                         std::lock_guard<std::mutex> lock(leftHandMutex);
                         
                         LeftHandScale = leftHand["scale"].get<double>();
+                        LeftHandIsActive = leftHand["isActive"].get<int>();
                         for (int i = 0; i < 26; i++) {
                             LeftHandTrackingState[i] = stringToPoseArray(leftHand["HandJointLocations"][i]["p"].get<std::string>());
                         }
@@ -158,6 +161,7 @@ void OnPXREAClientCallback(void* context, PXREAClientCallbackType type, int stat
                     {
                         std::lock_guard<std::mutex> lock(rightHandMutex);
                         RightHandScale = rightHand["scale"].get<double>();
+                        RightHandIsActive = rightHand["isActive"].get<int>();
                         for (int i = 0; i < 26; i++) {
                             RightHandTrackingState[i] = stringToPoseArray(rightHand["HandJointLocations"][i]["p"].get<std::string>());
                         }
@@ -324,6 +328,11 @@ int getLeftHandScale() {
     return LeftHandScale;
 }
 
+int getLeftHandIsActive() {
+    std::lock_guard<std::mutex> lock(leftHandMutex);
+    return LeftHandIsActive;
+}
+
 std::array<std::array<double, 7>, 26> getRightHandTrackingState() {
     std::lock_guard<std::mutex> lock(rightHandMutex);
     return RightHandTrackingState;
@@ -332,6 +341,11 @@ std::array<std::array<double, 7>, 26> getRightHandTrackingState() {
 int getRightHandScale() {
     std::lock_guard<std::mutex> lock(rightHandMutex);
     return RightHandScale;
+}
+
+int getRightHandIsActive() {
+    std::lock_guard<std::mutex> lock(rightHandMutex);
+    return RightHandIsActive;
 }
 
 // Body tracking functions
@@ -388,6 +402,8 @@ PYBIND11_MODULE(xrobotoolkit_sdk, m) {
     m.def("get_time_stamp_ns", &getTimeStampNs, "Get the timestamp in nanoseconds.");
     m.def("get_left_hand_tracking_state", &getLeftHandTrackingState, "Get the left hand state.");
     m.def("get_right_hand_tracking_state", &getRightHandTrackingState, "Get the right hand state.");
+    m.def("get_left_hand_is_active", &getLeftHandIsActive, "Get the left hand tracking quality (0 = low, 1 = high).");
+    m.def("get_right_hand_is_active", &getRightHandIsActive, "Get the right hand tracking quality (0 = low, 1 = high).");
     
     // Body tracking functions
     m.def("is_body_data_available", &isBodyDataAvailable, "Check if body tracking data is available.");
